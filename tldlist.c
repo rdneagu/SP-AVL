@@ -33,6 +33,11 @@ TLDNode *tldnode_create(TLDList *tldList, char *tld, TLDNode *parent);
 void tldnode_destroy(TLDNode *node);
 
 /**
+ * Recursively adds all the nodes to an iterator sorted inorder
+ */
+void iterator_add(TLDIterator *iter, TLDNode *root, int *index);
+
+/**
  * Sets the current balance of the node by getting the height difference
  * of the left and right nodes
  */
@@ -83,11 +88,6 @@ TLDNode *rotate_left_then_right(TLDNode *node);
  * @returns TLDNode *
  */
 TLDNode *rotate_right_then_left(TLDNode *node);
-
-/**
- * Recursively adds all the nodes to an iterator sorted inorder
- */
-void iteratorAdd(TLDIterator *iter, TLDNode *root, int *index);
 
 /**
  * Structs
@@ -222,16 +222,16 @@ TLDIterator *tldlist_iter_create(TLDList *tld) {
     // Initialize an identifier for the location in memory where the next node pointer will be added
     // Call the recursive function to add all the nodes' pointers to the iterator and pass the identifier by reference
     int index = 0;
-    iteratorAdd(iter, tld->root, &index);
+    iterator_add(iter, tld->root, &index);
   }
   return iter;
 }
 
-void iteratorAdd(TLDIterator *iter, TLDNode *root, int *index) {
+void iterator_add(TLDIterator *iter, TLDNode *root, int *index) {
   if (root != NULL) {
-    iteratorAdd(iter, root->left, index);
+    iterator_add(iter, root->left, index);
     *(iter->next + (*index)++) = root; // Push the node pointer into the list and increment the identifier
-    iteratorAdd(iter, root->right, index);
+    iterator_add(iter, root->right, index);
   }
 }
 
