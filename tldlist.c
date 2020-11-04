@@ -16,22 +16,27 @@
 #include <ctype.h>
 
 /**
+ * Recursively frees the memory used by the nodes of a TLD list
+ */
+void tldlist_destroy_nodes(TLDNode *node);
+
+/**
  * Allocates the heap memory required for a TLD node and assigns the tld to it
  *
  * @returns TLDNode *
  */
-TLDNode *createTLDNode(TLDList *tldList, char *tld, TLDNode *parent);
+TLDNode *tldnode_create(TLDList *tldList, char *tld, TLDNode *parent);
 
 /**
  * Frees the memory that was allocated to the node
  */
-void destroyTLDNode(TLDNode *node);
+void tldnode_destroy(TLDNode *node);
 
 /**
  * Sets the current balance of the node by getting the height difference
  * of the left and right nodes
  */
-void setBalance(TLDNode *node);
+void set_balance(TLDNode *node);
 
 /**
  * Returns the current height of the node
@@ -56,28 +61,28 @@ void rebalance(TLDList *tld, TLDNode *node);
  *
  * @returns TLDNode *
  */
-TLDNode *rotateLeft(TLDNode *node);
+TLDNode *rotate_left(TLDNode *node);
 
 /**
  * Performs a right rotation on a node
  *
  * @returns TLDNode *
  */
-TLDNode *rotateRight(TLDNode *node);
+TLDNode *rotate_right(TLDNode *node);
 
 /**
  * Performs a left then right rotation on a node
  *
  * @returns TLDNode *
  */
-TLDNode *rotateLeftThenRight(TLDNode *node);
+TLDNode *rotate_left_then_right(TLDNode *node);
 
 /**
  * Performs a right then left rotation on a node
  *
  * @returns TLDNode *
  */
-TLDNode *rotateRightThenLeft(TLDNode *node);
+TLDNode *rotate_right_then_left(TLDNode *node);
 
 /**
  * Recursively adds all the nodes to an iterator sorted inorder
@@ -127,17 +132,20 @@ TLDList *tldlist_create(Date *begin, Date *end) {
 }
 
 void tldlist_destroy(TLDList *tld) {
-  TLDIterator *iter = tldlist_iter_create(tld);
-  TLDNode *node;
-  // Loop through the list and destroy all the nodes
-  while ((node = tldlist_iter_next(iter))) {
-    destroyTLDNode(node);
+  if (tld != NULL) {
+    tldlist_destroy_nodes(tld->root); // Recursively frees the mem used by all the nodes
+    date_destroy(tld->begin); // Frees the mem used for the begin date
+    date_destroy(tld->end); // Frees the mem used for the end date
+    free(tld); // Frees the mem used by the TLD list
   }
-  // Finally, destroy the iterator and free the memory allocated for the TLD list
-  tldlist_iter_destroy(iter);
-  date_destroy(tld->begin);
-  date_destroy(tld->end);
-  free(tld);
+}
+
+void tldlist_destroy_nodes(TLDNode *node) {
+  if (node != NULL) {
+    tldlist_destroy_nodes(node->left);
+    tldlist_destroy_nodes(node->right);
+    tldnode_destroy(node);
+  }
 }
 
 int tldlist_add(TLDList *tld, char *hostname, Date *d) {
@@ -175,16 +183,16 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d) {
       // If the node is not occupied, create the node at the proper position then rebalance the tree
       if (currentNode == NULL) {
         if (direction > 0) {
-          parentNode->left = createTLDNode(tld, tldString, parentNode);
+          parentNode->left = tldnode_create(tld, tldString, parentNode);
         } else if (direction < 0) {
-          parentNode->right = createTLDNode(tld, tldString, parentNode);
+          parentNode->right = tldnode_create(tld, tldString, parentNode);
         }
         rebalance(tld, parentNode);
       }
     }
   } else {
     // Set the tree root to the newly created node
-    tld->root = createTLDNode(tld, tldString, NULL);
+    tld->root = tldnode_create(tld, tldString, NULL);
   }
   // Increment the node count
   tld->count++;
@@ -199,9 +207,8 @@ long tldlist_count(TLDList *tld) {
  * TLD Iterator
  */
 TLDIterator *tldlist_iter_create(TLDList *tld) {
-  if (tld == NULL) {
+  if (tld == NULL)
     return NULL;
-  }
 
   TLDIterator *iter = (TLDIterator *) malloc(sizeof(TLDIterator));
   if (iter != NULL) {
@@ -243,7 +250,7 @@ void tldlist_iter_destroy(TLDIterator *iter) {
 /**
  * TLD Node
  */
-TLDNode *createTLDNode(TLDList *tldList, char *tld, TLDNode *parent) {
+TLDNode *tldnode_create(TLDList *tldList, char *tld, TLDNode *parent) {
   TLDNode *node = (TLDNode *) malloc(sizeof(TLDNode));
   if (node != NULL) {
     node->parent = parent;
@@ -266,7 +273,7 @@ long tldnode_count(TLDNode *node) {
   return (node != NULL) ? node->count : 0;
 }
 
-void destroyTLDNode(TLDNode *node) {
+void tldnode_destroy(TLDNode *node) {
   free(node->tld);
   free(node);
 }
@@ -274,7 +281,7 @@ void destroyTLDNode(TLDNode *node) {
 /**
  * Tree balancing
  */
-void setBalance(TLDNode *node) {
+void set_balance(TLDNode *node) {
   reheight(node);
   node->balance = height(node->right) - height(node->left);
 }
@@ -293,19 +300,19 @@ void reheight(TLDNode *node) {
 }
 
 void rebalance(TLDList *tld, TLDNode *node) {
-  setBalance(node);
+  set_balance(node);
 
   if (node->balance == -2) {
     if (height(node->left->left) >= height(node->left->right)) {
-      node = rotateRight(node);
+      node = rotate_right(node);
     } else {
-      node = rotateLeftThenRight(node);
+      node = rotate_left_then_right(node);
     }
   } else if (node->balance == 2) {
     if (height(node->right->right) >= height(node->right->left)) {
-      node = rotateLeft(node);
+      node = rotate_left(node);
     } else {
-      node = rotateRightThenLeft(node);
+      node = rotate_right_then_left(node);
     }
   }
 
@@ -316,7 +323,7 @@ void rebalance(TLDList *tld, TLDNode *node) {
   }
 }
 
-TLDNode *rotateLeft(TLDNode *node) {
+TLDNode *rotate_left(TLDNode *node) {
   TLDNode *right = node->right;
   right->parent = node->parent;
 
@@ -336,13 +343,13 @@ TLDNode *rotateLeft(TLDNode *node) {
     }
   }
 
-  setBalance(node);
-  setBalance(right);
+  set_balance(node);
+  set_balance(right);
 
   return right;
 }
  
-TLDNode *rotateRight(TLDNode *node) {
+TLDNode *rotate_right(TLDNode *node) {
   TLDNode *left = node->left;
   left->parent = node->parent;
 
@@ -363,18 +370,18 @@ TLDNode *rotateRight(TLDNode *node) {
     }
   }
 
-  setBalance(node);
-  setBalance(left);
+  set_balance(node);
+  set_balance(left);
 
   return left;
 }
  
-TLDNode *rotateLeftThenRight(TLDNode *node) {
-  node->left = rotateLeft(node->left);
-  return rotateRight(node);
+TLDNode *rotate_left_then_right(TLDNode *node) {
+  node->left = rotate_left(node->left);
+  return rotate_right(node);
 }
  
-TLDNode *rotateRightThenLeft(TLDNode *node) {
-  node->right = rotateRight(node->right);
-  return rotateLeft(node);
+TLDNode *rotate_right_then_left(TLDNode *node) {
+  node->right = rotate_right(node->right);
+  return rotate_left(node);
 }

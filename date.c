@@ -22,8 +22,8 @@ struct date {
  * 
  * @returns Whether the number is in range or not
  */
-int isInRange(int number, int min, int max);
-int isInRange(int number, int min, int max) {
+int is_in_range(int number, int min, int max);
+int is_in_range(int number, int min, int max) {
   return (number >= min && number <= max);
 }
 
@@ -32,7 +32,7 @@ Date *date_create(char *datestr) {
   if (datePointer != NULL) {
     sscanf(datestr, "%d/%d/%d", &datePointer->day, &datePointer->month, &datePointer->year);
     // Make sure the date is within calendar range
-    if (!isInRange(datePointer->day, 1, 31) || !isInRange(datePointer->month, 1, 12) || datePointer->year <= 0) {
+    if (!is_in_range(datePointer->day, 1, 31) || !is_in_range(datePointer->month, 1, 12) || datePointer->year <= 0) {
       return NULL;
     }
   }
@@ -46,6 +46,7 @@ Date *date_duplicate(Date *d) {
   }
   return dDatePointer;
 }
+
 int date_compare(Date *date1, Date *date2) {
   int result = 0;
   if (date1 != NULL && date2 == NULL)
