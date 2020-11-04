@@ -1,0 +1,12 @@
+05/11/2018 www.intel.com
+12/12/2018 www.dcs.gla.ac.uk
+05/11/2019 www.mit.edu
+31/12/2018 www.cms.rgu.ac.uk
+25/12/2017 www.informatik.tum.de
+01/04/2018 www.wiley.co.uk
+01/01/2019 www.fiat.it
+14/02/2018 www.valentine.com
+01/03/2018 www.acme.co.uk
+01/01/2018 www.comp.stand.ac.uk
+28/02/2018 www.renault.fr
+30/07/2018 www.siemens.de
